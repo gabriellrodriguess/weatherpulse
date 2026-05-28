@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WeatherPulse — Clima & Notícias</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: rgba(255,255,255,0.07);
+      --accent: #7fffb2;
+      --accent2: #5be0ff;
+      --text: #f0f0f5;
+      --muted: #6b6b80;
+      --danger: #ff6b6b;
+      --warn: #ffd166;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* BG decoration */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: -200px;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(127,255,178,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: -200px; right: -200px;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(91,224,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: relative; z-index: 10;
+      padding: 28px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.4rem;
+      letter-spacing: -0.5px;
+    }
+    .logo span { color: var(--accent); }
+
+    .tagline {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* ── SEARCH ── */
+    .search-section {
+      position: relative; z-index: 10;
+      padding: 48px 40px 0;
+      max-width: 680px;
+    }
+
+    .search-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 24px;
+    }
+    .search-label em {
+      font-style: normal;
+      color: var(--accent);
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .search-bar input {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-bar input::placeholder { color: var(--muted); }
+    .search-bar input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(127,255,178,0.1);
+    }
+
+    .search-bar button {
+      background: var(--accent);
+      color: #0a0a0f;
+      border: none;
+      border-radius: 14px;
+      padding: 16px 28px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .search-bar button:hover { opacity: 0.85; transform: translateY(-1px); }
+    .search-bar button:active { transform: translateY(0); }
+
+    /* ── MAIN GRID ── */
+    main {
+      position: relative; z-index: 10;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 24px;
+      min-height: 70vh;
+    }
+
+    /* ── WEATHER CARD ── */
+    .weather-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .weather-empty, .news-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 300px;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .weather-empty .icon-big, .news-empty .icon-big {
+      font-size: 3rem;
+      opacity: 0.3;
+    }
+
+    .city-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+    .country-badge {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-left: 8px;
+      vertical-align: middle;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    .temp-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+    }
+    .temp-big {
+      font-family: 'Syne', sans-serif;
+      font-size: 5rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--accent);
+    }
+    .temp-unit { font-size: 2rem; color: var(--muted); }
+    .weather-icon-big { font-size: 3.5rem; line-height: 1; }
+
+    .condition {
+      font-size: 1rem;
+      color: var(--muted);
+      text-transform: capitalize;
+    }
+
+    .weather-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .meta-item {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .meta-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .meta-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .feels-bar {
+      background: var(--surface2);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .feels-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+    .feels-temp {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    /* temp color */
+    .cold { color: var(--accent2); }
+    .mild { color: var(--accent); }
+    .hot  { color: var(--warn); }
+    .vhot { color: var(--danger); }
+
+    /* ── NEWS PANEL ── */
+    .news-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .panel-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+    .news-count {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+
+    .news-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .news-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: start;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      animation: fadeUp 0.4s ease both;
+    }
+    .news-card:hover {
+      border-color: rgba(127,255,178,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .news-source {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 6px;
+    }
+    .news-title {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.45;
+      margin-bottom: 8px;
+    }
+    .news-date {
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .news-thumb {
+      width: 72px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: 10px;
+      background: var(--surface2);
+      flex-shrink: 0;
+    }
+    .news-thumb-placeholder {
+      width: 72px;
+      height: 72px;
+      border-radius: 10px;
+      background: var(--surface2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+
+    /* ── ERROR / LOADING ── */
+    .loading-spinner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .error-msg {
+      background: rgba(255,107,107,0.1);
+      border: 1px solid rgba(255,107,107,0.3);
+      border-radius: 12px;
+      padding: 16px 20px;
+      color: var(--danger);
+      font-size: 0.9rem;
+    }
+
+    /* ── API KEY NOTICE ── */
+    .api-notice {
+      position: relative; z-index: 10;
+      margin: 0 40px 32px;
+      background: rgba(255,209,102,0.08);
+      border: 1px solid rgba(255,209,102,0.25);
+      border-radius: 14px;
+      padding: 16px 20px;
+      font-size: 0.85rem;
+      color: var(--warn);
+      line-height: 1.6;
+    }
+    .api-notice strong { font-weight: 600; }
+    .api-notice code {
+      background: rgba(255,209,102,0.15);
+      border-radius: 4px;
+      padding: 1px 6px;
+      font-family: monospace;
+      font-size: 0.82rem;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      header { padding: 20px 24px; }
+      .search-section { padding: 32px 24px 0; }
+      main { padding: 24px; grid-template-columns: 1fr; }
+      .api-notice { margin: 0 24px 24px; }
+    }
+    @media (max-width: 500px) {
+      .search-label { font-size: 1.6rem; }
+      .temp-big { font-size: 3.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">Weather<span>Pulse</span></div>
+    <div class="tagline">Clima & Notícias em tempo real</div>
+  </header>
+
+  <section class="search-section">
+    <h1 class="search-label">Explore o clima e as <em>notícias</em> de qualquer cidade</h1>
+    <div class="search-bar">
+      <input type="text" id="cityInput" placeholder="Digite uma cidade... (ex: São Paulo, London, Tokyo)" />
+      <button id="searchBtn">Buscar</button>
+    </div>
+  </section>
+
+  <div class="api-notice" id="apiNotice">
+    <strong>⚙️ Configure suas chaves de API:</strong> No arquivo JS, substitua
+    <code>WEATHER_API_KEY</code> pela sua chave do <a href="https://openweathermap.org/api" target="_blank" style="color:var(--warn)">OpenWeatherMap</a>
+    e <code>NEWS_API_KEY</code> pela sua chave do <a href="https://newsapi.org" target="_blank" style="color:var(--warn)">NewsAPI</a>.
+    Ambas são gratuitas.
+  </div>
+
+  <main>
+    <div class="weather-card" id="weatherCard">
+      <div class="weather-empty">
+        <div class="icon-big">🌍</div>
+        <div>Busque uma cidade para ver o clima</div>
+      </div>
+    </div>
+
+    <div class="news-panel" id="newsPanel">
+      <div class="panel-header">
+        <div class="panel-title">Notícias</div>
+        <div class="news-count" id="newsCount">—</div>
+      </div>
+      <div class="news-list" id="newsList">
+        <div class="news-empty">
+          <div class="icon-big">📰</div>
+          <div>As notícias aparecerão aqui</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ══════════════════════════════════════════
+    //  🔑 COLOQUE SUAS CHAVES AQUI
+    // ══════════════════════════════════════════
+    const WEATHER_API_KEY = 'SUA_CHAVE_OPENWEATHERMAP';
+    const NEWS_API_KEY    = 'SUA_CHAVE_NEWSAPI';
+    // ══════════════════════════════════════════
+
+    const input      = document.getElementById('cityInput');
+    const btn        = document.getElementById('searchBtn');
+    const weatherCard = document.getElementById('weatherCard');
+    const newsList   = document.getElementById('newsList');
+    const newsCount  = document.getElementById('newsCount');
+
+    // ── Search trigger ──────────────────────
+    btn.addEventListener('click', search);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+
+    async function search() {
+      const city = input.value.trim();
+      if (!city) { input.focus(); return; }
+
+      setWeatherLoading();
+      setNewsLoading();
+
+      await Promise.all([
+        fetchWeather(city),
+        fetchNews(city)
+      ]);
+    }
+
+    // ── WEATHER ─────────────────────────────
+    async function fetchWeather(city) {
+      try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${WEATHER_API_KEY}&units=metric&lang=pt_br`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(res.status === 404 ? 'Cidade não encontrada.' : 'Erro ao buscar clima.');
+        const data = await res.json();
+        renderWeather(data);
+      } catch (err) {
+        weatherCard.innerHTML = `<div class="error-msg">⚠️ ${err.message}</div>`;
+      }
+    }
+
+    function renderWeather(d) {
+      const temp     = Math.round(d.main.temp);
+      const feels    = Math.round(d.main.feels_like);
+      const humidity = d.main.humidity;
+      const wind     = Math.round(d.wind.speed * 3.6); // m/s → km/h
+      const condition = d.weather[0].description;
+      const icon     = getWeatherEmoji(d.weather[0].id, d.weather[0].icon);
+      const tempClass = temp < 10 ? 'cold' : temp < 22 ? 'mild' : temp < 32 ? 'hot' : 'vhot';
+
+      weatherCard.innerHTML = `
+        <div>
+          <div class="city-name">
+            ${d.name}
+            <span class="country-badge">${d.sys.country}</span>
+          </div>
+          <div class="condition">${condition}</div>
+        </div>
+
+        <div class="temp-row">
+          <div class="temp-big ${tempClass}">${temp}<span class="temp-unit">°C</span></div>
+          <div class="weather-icon-big">${icon}</div>
+        </div>
+
+        <div class="weather-meta">
+          <div class="meta-item">
+            <div class="meta-label">Umidade</div>
+            <div class="meta-value">${humidity}%</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Vento</div>
+            <div class="meta-value">${wind} km/h</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Mín / Máx</div>
+            <div class="meta-value">${Math.round(d.main.temp_min)}° / ${Math.round(d.main.temp_max)}°</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Pressão</div>
+            <div class="meta-value">${d.main.pressure} hPa</div>
+          </div>
+        </div>
+
+        <div class="feels-bar">
+          <div class="feels-label">Sensação Térmica</div>
+          <div class="feels-temp ${tempClass}">${feels}°C</div>
+        </div>
+      `;
+    }
+
+    function getWeatherEmoji(id, icon) {
+      const isNight = icon.includes('n');
+      if (id >= 200 && id < 300) return '⛈️';
+      if (id >= 300 && id < 400) return '🌦️';
+      if (id >= 500 && id < 600) return '🌧️';
+      if (id >= 600 && id < 700) return '❄️';
+      if (id >= 700 && id < 800) return '🌫️';
+      if (id === 800) return isNight ? '🌙' : '☀️';
+      if (id === 801) return '🌤️';
+      if (id >= 802 && id <= 804) return '☁️';
+      return '🌡️';
+    }
+
+    // ── NEWS ────────────────────────────────
+    async function fetchNews(city) {
+      try {
+        // NewsAPI: busca notícias pelo nome da cidade
+        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(city)}&sortBy=publishedAt&pageSize=8&language=pt&apiKey=${NEWS_API_KEY}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Erro ao buscar notícias.');
+        const data = await res.json();
+
+        if (!data.articles || data.articles.length === 0) {
+          // tenta em inglês se não há em pt
+          return fetchNewsEn(city);
+        }
+        renderNews(data.articles);
+      } catch (err) {
+        newsList.innerHTML = `<div class="error-msg">⚠️ ${err.message}</div>`;
+        newsCount.textContent = '—';
+      }
+    }
+
+    async function fetchNewsEn(city) {
+      try {
+        const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(city)}&sortBy=publishedAt&pageSize=8&apiKey=${NEWS_API_KEY}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Erro ao buscar notícias.');
+        const data = await res.json();
+
+        if (!data.articles || data.articles.length === 0) {
+          newsList.innerHTML = `<div class="news-empty"><div class="icon-big">🔍</div><div>Nenhuma notícia encontrada para essa cidade.</div></div>`;
+          newsCount.textContent = '0';
+          return;
+        }
+        renderNews(data.articles);
+      } catch (err) {
+        newsList.innerHTML = `<div class="error-msg">⚠️ ${err.message}</div>`;
+        newsCount.textContent = '—';
+      }
+    }
+
+    function renderNews(articles) {
+      // filtra artigos removidos
+      const valid = articles.filter(a => a.title && a.title !== '[Removed]');
+      newsCount.textContent = `${valid.length} artigos`;
+
+      newsList.innerHTML = valid.map((a, i) => {
+        const date = a.publishedAt ? formatDate(a.publishedAt) : '';
+        const source = a.source?.name || 'Fonte desconhecida';
+        const thumb = a.urlToImage
+          ? `<img class="news-thumb" src="${a.urlToImage}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" loading="lazy"><div class="news-thumb-placeholder" style="display:none">📰</div>`
+          : `<div class="news-thumb-placeholder">📰</div>`;
+
+        return `
+          <a class="news-card" href="${a.url}" target="_blank" rel="noopener" style="animation-delay:${i * 0.05}s">
+            <div>
+              <div class="news-source">${source}</div>
+              <div class="news-title">${a.title}</div>
+              <div class="news-date">${date}</div>
+            </div>
+            ${thumb}
+          </a>
+        `;
+      }).join('');
+    }
+
+    function formatDate(iso) {
+      const d = new Date(iso);
+      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+
+    // ── LOADING STATES ──────────────────────
+    function setWeatherLoading() {
+      weatherCard.innerHTML = `<div class="loading-spinner"><div class="spinner"></div> Buscando clima...</div>`;
+    }
+    function setNewsLoading() {
+      newsList.innerHTML = `<div class="loading-spinner"><div class="spinner"></div> Buscando notícias...</div>`;
+      newsCount.textContent = '...';
+    }
+  </script>
+</body>
+</html>
